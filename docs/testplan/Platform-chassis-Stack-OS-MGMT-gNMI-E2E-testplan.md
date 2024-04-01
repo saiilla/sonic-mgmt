@@ -75,7 +75,7 @@ A set-invalid test is a negative test whose intent is to verify that invalid con
    </td>
    <td>6
    </td>
-   <td><strong>14</strong>
+   <td><strong>13</strong>
    </td>
   </tr>
   <tr>
@@ -135,7 +135,7 @@ A set-invalid test is a negative test whose intent is to verify that invalid con
    </td>
    <td><strong>6</strong>
    </td>
-   <td><strong>25</strong>
+   <td><strong>24</strong>
    </td>
   </tr>
 </table>
