@@ -13,6 +13,8 @@ From the gNMI specification, the gNMI client can invoke a GET,  and/or SET reque
 
 In the test setup of Figure 1, a test client initializes a gNMI client that connects to the gNMI server running on a single switch under test (SUT).  This connection uses the `bond0` management interface.  
 
+<img width="408" alt="Screenshot 2024-04-03 at 3 34 30 PM" src="https://github.com/saiilla/sonic-mgmt/assets/165318278/44d26d2b-b82d-4851-a534-2d93da867939">
+
 
 Figure 1: gNMI end to end test setup.
 
