@@ -2,14 +2,14 @@
 
 # **Overview**
 
-This document outlines the approach for testing the functionality of different GET modes of the gNMI protocol as part of GPINs OpenConfig end-to-end testing.
+This document outlines the approach for testing the functionality of different GET modes of the gNMI protocol as part of OpenConfig end-to-end testing.
 
 
 # **Background**
 
-With SONiC as the network operating system (NOS) for GPINS, gNMI is responsible for monitoring, streaming telemetry, and configuration management.  Broadcom’s Unified Management Framework (UMF) provides gNMI streaming telemetry based on the standard OpenConfig model. 
+With SONiC as the network operating system (NOS), gNMI is responsible for monitoring, streaming telemetry, and configuration management based on the standard OpenConfig YANG models. 
  \
-The Get RPC is intended to retrieve the set of data elements for which the target should return a snapshot of data, for example a part of the configuration. A Subscription:ONCE request acts as a single request/response channel where the target creates the relevant update messages, transmits them, and subsequently closes the RPC. 
+The gNMI Get RPC is intended to retrieve the set of data elements for which the target should return a snapshot of data, for example a part of the configuration. A Subscription:ONCE request acts as a single request/response channel where the target creates the relevant update messages, transmits them, and subsequently closes the RPC. 
 
 
 # **gNMI Feature Description**
@@ -186,9 +186,9 @@ Returns Error
 
 # **Test Setup**
 
-In our test setup (shown in [Figure 1], a test client initializes a gNMI client that connects to the gNMI server running on a single switch under test (SUT) using gNMI (through proxy) or SFE (for config push). For this setup, we rely on the proxy to provide faithful, transparent results. 
+In our test setup (shown in [Figure 1], a test client initializes a gNMI client that connects to the gNMI server running on a single switch under test (SUT).
 
-<img width="409" alt="Screenshot 2024-04-03 at 2 30 41 PM" src="https://github.com/saiilla/sonic-mgmt/assets/165318278/e2ac2dc0-f6b6-49b5-8bd5-2a3660d99504">
+![Edited gNMI E2E Test Setup](https://github.com/saiilla/sonic-mgmt/assets/7834902/e9ae4b96-105f-48b1-812a-51b10e710704)
 
 # E2E Detailed Test Cases
 
