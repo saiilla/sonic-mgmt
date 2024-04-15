@@ -2,18 +2,18 @@
 
 # **Overview**
 
-This document aims to outline the approach for testing the functionality of different gNMI GET/SET operations supported by the gNMI protocol as part of GPINs OpenConfig end-to-end testing.
+This document aims to outline the approach for testing the functionality of different gNMI GET/SET operations supported by the gNMI protocol as part of OpenConfig end-to-end testing.
 
-With SONiC as the network operating system (NOS) for GPINS, gNMI is responsible for monitoring, streaming telemetry, and configuration management.  Broadcom’s Unified Management Framework (UMF) provides gNMI streaming telemetry based on the standard OpenConfig model. More details on gNMI for GPINs can be found here. \
- \
-From the gNMI specification, the gNMI client can invoke a GET,  and/or SET request. The SET operations can be further categorized into UPDATE, REPLACE, and DELETE operations.
+With SONiC as the network operating system (NOS), gNMI is responsible for monitoring, streaming telemetry, and configuration management which is based on the standard OpenConfig YANG models. 
+
+From the gNMI specification, the gNMI client can invoke a GET, and/or SET request. The SET operations can be further categorized into UPDATE, REPLACE, and DELETE operations.
 
 
 # **Test Setup**
 
 In the test setup of Figure 1, a test client initializes a gNMI client that connects to the gNMI server running on a single switch under test (SUT).  This connection uses the `bond0` management interface.  
 
-<img width="408" alt="Screenshot 2024-04-03 at 3 34 30 PM" src="https://github.com/saiilla/sonic-mgmt/assets/165318278/44d26d2b-b82d-4851-a534-2d93da867939">
+![Edited gNMI E2E Test Setup](https://github.com/saiilla/sonic-mgmt/assets/7834902/038a3de2-4386-478c-b22d-e97f41b43cc2)
 
 
 Figure 1: gNMI end to end test setup.
@@ -23,7 +23,7 @@ Figure 1: gNMI end to end test setup.
 
 All the payload values will be randomized in the test cases instead of hard-coded values. For example EthernetX will be used as an interface name instead of Ethernet0 and EthernetX can be taken out from the list of interfaces supported by the DUT during the execution.
 
-The SFE will always use gNMI SET replace/update/delete operation for modifying/removing the value in the switch and gNMI GET for fetching the values.
+The gNMI test client will always use gNMI SET replace/update/delete operation for modifying/removing the value in the switch and gNMI GET for fetching the values.
 
 
 ## SET operation
@@ -213,25 +213,25 @@ Root level operation</p>
 </table>
 
 
-To validate any of the following SET operations and its correctness of the data, the client will invoke a gNMI get operation for corresponding nodes and cache the result before invoking a set operation. The cached values will be adjusted based on the set request payload. Once the set operation is successful the client will invoke another get operation and validate the response against the expected response. The below example shows the operations in sequential order
+To validate any of the following SET operations and its correctness of the data, the test client will invoke a gNMI Get operation for corresponding nodes and cache the result before invoking a Set operation. The cached values will be adjusted based on the Set request payload. Once the Set operation is successful, the client will invoke another Get operation and validate the response against the expected response. The below example shows the operations in sequential order:
 
 
 ```
-cached_response = gNMI get for the interface/interface[name=EthernetX]/ 
-gNMI set for the interface/interface[name=EthernetX]/config/mtu
+cached_response = gNMI Get for the interface/interface[name=EthernetX]/ 
+gNMI Set for the interface/interface[name=EthernetX]/config/mtu
 expected_response = Update the MTU value for both config/state leafs in the cached response
-response = gNMI get for the interface/interface[name=EthernetX]/ 
+response = gNMI Get for the interface/interface[name=EthernetX]/ 
 Validate the response against the expected_response
 ```
 
 
-The GPINS gNMI server only supports encoding as proto and json and doesn’t not support any other encoding. The SET only accepts the payload as JSON values today.
+The gNMI server only supports encoding as proto and json and doesn’t not support any other encoding. The SET only accepts the payload as JSON values today.
 
 ## Test
 
-### Update Expectation
+### Set Update Expectation
 
-The expectation is for the gNMI server to process the valid update request and populate the leaf nodes with the values specified in the request payload and return the valid response to the client. If the leaf nodes are not present in the payload then the server should not populate them with the default values and leave those leaf values as-is(not modify them).
+The expectation is for the gNMI server to process the valid Set Update request and populate the leaf nodes with the values specified in the request payload and return the valid response to the client. If the leaf nodes are not present in the payload, then the server should not populate them with the default values and leave those leaf values as-is (not modify them).
 
 ### Test 1: Send a valid Update request for an existing leaf
 
@@ -246,9 +246,9 @@ Payload: {"openconfig-interfaces:description":"Test_config"}
 Validation:
   - gNMI Set RPC responds without error and all the fields in the response matches the expectation.
   - interfaces/interface/[name=EthernetX]/config/description matches the payload value ("Test_config").
-  - Verify that other fields for the EthernetX subtree is not updated
+  - Verify that other fields for the EthernetX subtree are not updated
 
-### Test 2: Send a valid Update request for an non-existing leaf
+### Test 2: Send a valid Set Update request for a non-existing leaf
 
 Condition to test:
 ```
@@ -275,17 +275,17 @@ payload: {
                             "address" : [
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                },
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }
                             ]
                          }
@@ -300,10 +300,10 @@ payload: {
 ```
 
 Validation:
-  - Verify that the Leaf should be created and proper response received. In this case the loopback interfaces should be created in the configuration.
+  - Verify that the Leaf should be created and an appropriate response received. In this case the loopback interfaces should be created in the configuration.
 
-### Test 3: Send an Update request with 2 valid updates
-Condition to test: send update request with 2 valid update payloads
+### Test 3: Send a Set Update request with 2 valid updates
+Condition to test: Send a Set Update request with 2 valid update payloads
 ```
 path: { origin: "openconfig" elem: { name:"interfaces" } }
 
@@ -330,17 +330,17 @@ payload:
                             "address" : [
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   }, 
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }, 
                                {  
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   }, 
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }  
                             ]     
                          }     
@@ -372,17 +372,17 @@ payload:
                             "address" : [
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                },
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }
                             ]
                          }
@@ -396,7 +396,7 @@ payload:
 }
 ```
 Validation: 
-  - Verify that the Leaf should be created and proper response received. In this case the loopback interfaces should be along with both IPV4 and IPV6 addresses.
+  - Verify that the Leaf should be created and appropriate response received. In this case the loopback interfaces should be along with both IPV4 and IPV6 addresses.
 
 ### Test 4: Negative test cases - Interface description for the platform subtree
 
@@ -408,7 +408,7 @@ Payload: {"openconfig-interfaces:description":"Test_config"}
 ```
 
 Validation: 
-  - SET response should contain a failure message, also verifies none of the other path’s values are changed for the platform subtree
+  - SET response should contain a failure message, also verify that none of the other paths values are changed for the platform subtree.
 
 ### Test 4: Negative test cases - Send invalid path
 
@@ -421,15 +421,15 @@ Payload: {"openconfig-interfaces:description":"Test_config"}
 ```
 
 Validation: 
-  - SET response should contain a failure message, also verifies none of the other paths values are changed and there shouldn’t be any values populated for xyz path
+  - SET response should contain a failure message, also verify that none of the other paths values are changed and there shouldn’t be any values populated for xyz path
 
-### Replace Expectation
+### Set Replace Expectation
 
-The expectation is for the gNMI server to process the valid replace request and populate the leaf nodes with the values specified in the request payload and return the valid response to the client. If the leaf nodes are not present in the payload then the server should populate them with the default values.
+The expectation is for the gNMI server to process the valid Set Replace request and populate the leaf nodes with the values specified in the request payload and return the valid response to the client. If the leaf nodes are not present in the payload, then the server should populate them with the default values.
 
-### Test 1: Send a Replace request for a branch in a default state to mutate a single leaf
+### Test 1: Send a Set Replace request for a branch in a default state to mutate a single leaf
 
-Condition to test: replace request for a single leaf
+Condition to test: Set Replace request for a single leaf
 
 ```
 path: { origin: "openconfig" elem: { name:"interfaces" } elem: { name:"interface" key: { key: "name" value: "EthernetX" } }  elem: { name:"config" } elem: { name:"description" } }
@@ -439,11 +439,11 @@ Payload: {"openconfig-interfaces:description":"Test_config"}
 ```
 
 Validation: 
-  - Verify that the interfaces/interface/[name=EthernetX]/config/description is properly replaced and proper response is returned without any errors.
+  - Verify that the value for interfaces/interface/[name=EthernetX]/config/description is replaced and an appropriate response is returned without any errors.
 
-### Test 2: Send a Replace request to mutate few leafs in a branch that has other modified values
+### Test 2: Send a Set Replace request to mutate few leafs in a branch that has other modified values
 
-Condition to test: replace request for multiple leafs
+Condition to test: Set Replace request for multiple leafs
 ```
 path: { origin: "openconfig" elem: { name:"interfaces" } }
 payload:
@@ -469,17 +469,17 @@ payload:
                             "address" : [
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                },
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }
                             ]
                          }
@@ -495,11 +495,11 @@ payload:
 ```
 
 Validation: 
-  - Verify that the Leaf should be created and proper response received. In this case the loopback interfaces should be created in the configuration and all the unset values for this interface should be set to default values ( example: mtu )
+  - Verify that the Leaf should be created and appropriate response received. In this case the loopback interfaces should be created in the configuration and all the unset values for this interface should be set to default values ( example: mtu )
 
-### Test 3: Send an Replace request with 2 valid updates
+### Test 3: Send a Set Replace request with 2 valid updates
 
-Condition to test: send update request with 2 valid update payloads
+Condition to test: send a Set Replace request with 2 valid update payloads
 
 ```
 path: { origin: "openconfig" elem: { name:"interfaces" } }
@@ -526,17 +526,17 @@ Payload:
                             "address" : [
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   }, 
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }, 
                                {  
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : XX
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   }, 
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }  
                             ]     
                          }     
@@ -568,17 +568,17 @@ Payload:
                             "address" : [
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
+                                     "ip" : "<IP_ADDR>",
                                      "prefix-length" : 64
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                },
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
+                                     "ip" : "<IP_ADDR>",
                                      "prefix-length" : 64
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }
                             ]
                          }
@@ -592,11 +592,11 @@ Payload:
 }
 ```
 Validation: 
-  - Verify that the Leaf should be created and proper response received. In this case the loopback interfaces should be along with both IPV4 and IPV6 addresses.
+  - Verify that the Leaf should be created and appropriate response received. In this case the loopback interfaces should be along with both IPV4 and IPV6 addresses.
 
-### Test 4: Negative test cases - Send a request with 1 valid and 1 invalid Replace operations
+### Test 4: Negative test cases - Send a request with 1 valid and 1 invalid Set Replace operations
 
-Condition to test: replace request with 1 valid and 1 invalid request 
+Condition to test: Set Replace request with 1 valid and 1 invalid request 
 ```
 path: { origin: "openconfig" elem: { name:"interfaces" } }
 payload:
@@ -610,7 +610,7 @@ payload:
                 "name" : "Loopbackx"
              }, 
              "name" : "Loopbackx",
-             "mtu"  : "<MTU>"
+             "mtu"  : "mtu"
              }
           }
        ]
@@ -629,7 +629,7 @@ path: { origin: "openconfig" elem: { name:"platform" } }
 Payload: {"openconfig-interfaces:description":"Test_config"}
 ```
 Validation: 
-  - SET response should contain a failure message, also verifies none of the other path’s values are changed for the platform subtree
+  - SET response should contain a failure message, also verify that none of the other paths values are changed for the platform subtree
 
 ### Test 6: Negative test cases - Send invalid path
  Condition to test: Send invalid path
@@ -639,14 +639,14 @@ path: { origin: "openconfig" elem: { name:"xyz" } }
 Payload: {"openconfig-interfaces:description":"Test_config"}
 ```
 Validation: 
-  - SET response should contain a failure message, also verifies none of the other paths values are changed and there shouldn’t be any values populated for xyz path.
+  - SET response should contain a failure message, also verify that none of the other paths values are changed and there shouldn’t be any values populated for xyz path.
 
-### Delete Expectation
-The expectation is for the gNMI server to process the valid delete request and remove those nodes from the system. The server should send a valid response to the client once the request has been processed successfully. 
+### Set Delete Expectation
+The expectation is for the gNMI server to process the valid Set Delete request and remove those nodes from the system. The server should send a valid response to the client once the request has been processed successfully. 
 
-### Test 1: Send a valid delete request for an existing leaf 
+### Test 1: Send a valid Set Delete request for an existing leaf 
 
-Condition to test: Send a delete request for an existing interface
+Condition to test: Send a Set Delete request for an existing interface
 
 ```
 path: { origin: "openconfig" elem: { name:"interfaces" } elem: { name:"interface" key: { key: "name" value: "EthernetX" } }
@@ -655,20 +655,20 @@ path: { origin: "openconfig" elem: { name:"interfaces" } elem: { name:"interface
 Validation: 
   - Verify that the interfaces/interface/[name=EthernetX] is properly removed from the config and a valid response is returned to the client.
 
-### Test 2: Send an delete request for a non-existing leaf
+### Test 2: Send a Set Delete request for a non-existing leaf
 
-Condition to test: Send a delete request for an invalid interface
+Condition to test: Send a Set Delete request for an invalid interface
 
 ```
 path: { origin: "openconfig" elem: { name:"interfaces" } elem: { name:"interface" key: { key: "name" value: "EthernetY" } }
 ```
 
 Validation: 
-   - Verify that the delete request has failed and respond with an appropriate error message.
+   - Verify that the Set delete request has failed and respond with an appropriate error message.
 
-### Test 3: Send an delete request with 2 valid delete messages
+### Test 3: Send a Set Delete request with 2 valid delete messages
 
-Condition to test: Send delete request with 2 messages
+Condition to test: Send a Set Delete request with 2 messages
 
 ```
 path: { origin: "openconfig" elem: { name:"interfaces" } }
@@ -695,17 +695,17 @@ payload:
                             "address" : [
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : xx
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   }, 
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }, 
                                {  
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
-                                     "prefix-length" : xx
+                                     "ip" : "<IP_ADDR>",
+                                     "prefix-length" : 32
                                   }, 
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }  
                             ]     
                          }     
@@ -737,17 +737,17 @@ payload:
                             "address" : [
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
+                                     "ip" : "<IP_ADDR>",
                                      "prefix-length" : 64
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                },
                                {
                                   "config" : {
-                                     "ip" : "<IP_ADD>",
+                                     "ip" : "<IP_ADDR>",
                                      "prefix-length" : 64
                                   },
-                                  "ip" : "<IP_ADD>"
+                                  "ip" : "<IP_ADDR>"
                                }
                             ]
                          }
@@ -762,17 +762,17 @@ payload:
 ```
 
 Validation: 
-  - Verify that the Leaf should be deleted and proper response received. In this case the loopback interfaces should be along with both IPV4 and IPV6 addresses.
+  - Verify that the Leaf should be deleted and proper response received. In this case the loopback interfaces should be deleted along with both IPV4 and IPV6 addresses.
 
 ### SET operation 
 
 ### Mixed type operations Expectation
 
-A valid request containing a delete, a replace and an update operation, the server must follow the processing order specified in gNMI specification and handle the request without any errors. The server should send a valid response to the client once the request has been processed successfully.
+A valid request containing a Set Delete, Set Replace and a Set Update operation. The server must follow the processing order specified in gNMI specification and handle the request without any errors. The server should send a valid response to the client once the request has been processed successfully.
 
-### Test 1: Send a valid delete, replace and update request for an existing subtree
+### Test 1: Send a valid Set request with delete, replace and update for an existing subtree
 
-Condition to test: Send a delete for an interface, replace for other interfaces followed by an update request.
+Condition to test: Send a Set delete for an interface, replace for other interfaces followed by an update request.
 ```
 path: { origin: "openconfig" elem: { name:"interfaces" } }
 payload:
@@ -840,7 +840,7 @@ Validation:
 ### GET operation
 
 #### Expectation
-The GET response should contain the value of the request nodes. The expectation is for the gNMI server to process the valid get request and should send a valid response containing the values of the request nodes. Only the PROTO and JSON encodings are currently supported in the GPINS.
+The GET response should contain the value of the request nodes. The expectation is for the gNMI server to process the valid get request and should send a valid response containing the values of the request nodes. Only the PROTO and JSON encodings are currently supported.
 
 #### Challenges
 For end-to-end tests, we cannot be sure of what config nodes are set in the system beforehand and hence cannot determine what paths to validate against. The GET request can be issued after a SET request and validate the values that have been used in the SET request.
